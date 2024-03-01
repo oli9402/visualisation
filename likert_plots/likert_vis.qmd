@@ -1,0 +1,453 @@
+---
+title: "Likert_Vis"
+format:
+  html:
+    code-fold: true
+    code-summary: "Show the code"
+editor: source
+
+---
+
+# Output von Likert Skala Visualisieren
+
+Es gibt mehrere Arten, wie man Output von Likert Skalen visualisiert. Oftmals gibt es keine richtige Art, sondern bezieht sich auch auf die Aussagen, die man über die Daten treffen möchte. Ausserdem ist es auch mit einer persönlichen Präferenz verbuden. 
+
+## Simulation von Daten 
+
+Im folgenden simulieren wir einen Datensatz, den wir danach visualisieren können. Der Code ist aus einem Blog post. 
+
+Zuerst noch einige Vorbereitungsschritte
+
+### Packete installieren und laden
+```{r, warning = F, error=F, message=FALSE}
+# RStudio Environment löschen. Somit ist nichts unerwünschtes in unserer Arbeitsfläche
+rm(list = ls())
+
+# Packete installieren
+# install.packages("tidyverse")
+
+# Packete laden
+library(tidyverse)
+```
+### Daten simulieren
+
+Wir erstellen eine Simulation mit einer Likert Skala mit 5 Stufen. Es wird über Schokoriegel gehen. 
+```{r}
+# wie viele Datenpunkte wollen wir: Also unser N.
+size <- 100000
+
+# Was sind die Antwortsmöglichkeiten der Likert Skala: hier 5 Stufen. Könnten auch Zahlen sein. 
+responses <- c("Like them a lot", "Like them", "Neutrals", "Dislike them", "Dislike a lot")
+
+
+# Die "Fragen" oder hier die Produkte: Schokoriegel werden in einem Vektor abgespeichert, dabei wird jedes Produkt 100000 mal wiederholt, sodass es überreinsstimmt mit den nachfolgend erstellten Daten.
+brand <- c(rep("Bounty", size), 
+           rep("Snickers", size), 
+           rep("Milky Way", size), 
+           rep("Mars", size), 
+           rep("Galaxy Caramel", size), 
+           rep("Twix", size), 
+           rep("Galaxy", size), 
+           rep("Teaser", size))
+
+```
+
+Als nächstes ziehen wir aus den mögliche Antworstalternativen jeweils acht (für jedes Produkt) Samples. Sample Size ist 100000. `replace = TRUE` besagt, dass aus dem Vektor `response` die gezogene Antwort wieder "zurückgelegt wird". Mit dem Argument `prob`kann man die Wahrscheinlichkeit angebene mit der die jewiligen Antwort gezogen werden.  
+
+```{r}
+cus_res <- c(sample(responses, size = size, replace = TRUE, prob = c(24, 36, 15, 11, 14)), 
+             sample(responses, size = size, replace = TRUE, prob = c(23, 42, 17, 9, 9)), 
+             sample(responses, size = size, replace = TRUE, prob = c(16, 52, 23, 6, 3)), 
+             sample(responses, size = size, replace = TRUE, prob = c(15, 57, 18, 7, 3)), 
+             sample(responses, size = size, replace = TRUE, prob = c(27, 46, 17, 8, 2)), 
+             sample(responses, size = size, replace = TRUE, prob = c(18, 57, 19, 5, 1)), 
+             sample(responses, size = size, replace = TRUE, prob = c(29, 51, 15, 4, 1)), 
+             sample(responses, size = size, replace = TRUE, prob = c(39, 42, 14, 4, 1)))
+```
+
+Wir speichern die Daten als `tibble`ab unter dem Namen data_cus. Ausserdem übergeben wir die Produkte in der ersten Spalte. Wir sehen, dass wir eine *längsform der Daten* erschafft haben. 
+
+```{r}
+data_cus <- tibble(brand = brand, cus_res = cus_res)
+```
+
+### Schauen wir uns die Daten an
+
+```{r}
+data_cus %>% 
+  head(10)
+```
+
+## Daten in Form bringen (für die Visualisierung)
+
+Im Moment haben noch keine Form der Daten, die sich visualisieren lässt. Wir wollen numerische Daten, und nicht wie jetzt Text Daten. Für die erste Visualiserung arbeiten wir mit aggregierten Daten. Dies ist auch hilfreich, da wir auch so Survey Weight Outputs visualiseren können, da solche nur in aggregierter Form vorliegen. Beispiel:
+
+| Produkt         | Antwort           | Häufigkeit dieser Antowrt  | Prozent | Text für Visualisierung|
+|---------------|:-------------:|------:|:-------:|:--------:|
+| Bounty    | Dislike a lot| 100000 |14|14%|
+| Bounty    | Dislike them     | 100000 |14|14%|
+| Bounty | Like them     |   100000 |14|14%|
+| Bounty |  Like them a lot     | 100000 |14|14%|
+| Bounty    | Neutrals   |   100000 |14|14%|
+
+
+
+Mit folgenden Code können wir diese Form erreichen:
+grouby by erklären.....
+```{r}
+df_for_ploting <- data_cus %>% 
+  group_by(brand, cus_res) %>% # alle Funktionen, die folgen werden auf jede Kombination von brand un cus_res angewendent
+  count()%>% # zählt wie oft eine Kategorie vorkommt
+  ungroup() %>% # alle Funktionen, die Folgen werden auf den ganzen Datensatz angewendet
+  group_by(brand) %>% # ....für jedes Produkt (Brand)
+  mutate(percent = 100*n / sum(n)) %>% #Output von count() ist eine Tabelle mit n, auf dieses n wird hier wieder zugeriffen. 
+  mutate(percent = round(percent, 0)) %>% 
+  mutate(bar_text = paste0(percent, "%")) %>% 
+  ungroup() 
+```
+
+```{r}
+order_y <- df_for_ploting %>% 
+  filter(cus_res == responses[1]) %>% 
+  arrange(percent) %>%  #bis hier wird eine ganze Tabelle ausgegeben. Mit pull kann man nur brands abspeichern
+  pull(brand) 
+```
+
+
+```{r}
+df_ordered <-df_for_ploting %>% 
+  mutate(brand = factor(brand, levels = order_y)) %>% 
+  mutate(cus_res = factor(cus_res, levels = responses[5:1])) 
+
+```
+
+
+#---------------------
+# Data Vis: Version 1
+#---------------------
+
+# Prepare colors for ploting: 
+```{r}
+# col_dislike_alot <- "#e36c33"
+# # 
+# col_dislike <- "#edad88"
+# # 
+#  col_neutral <- "#c7cdd1"
+# # 
+#  col_like <- "#829cb2"
+# # 
+#  col_like_alot <- "#3e6487"
+
+#col_dislike_alot <- "#a6611a"
+
+#col_dislike <- "#dfc27d"
+
+#col_neutral <- "#f5f5f5"
+
+
+#col_like <- "#80cdc1"
+#col_like_alot <- "#018571"
+
+#"#6a6464"
+
+col_dislike_alot <- "#B3AEAE"
+
+col_dislike <- "#DEDEDE"
+
+col_neutral <- "#bdd7d1"
+
+
+col_like <- "#00CFAA"
+col_like_alot <- "#009683"
+```
+
+
+# Select Font for the graph: 
+
+```{r, message = F, warning = F}
+my_font <- "Roboto Condensed"
+
+library(showtext)
+
+font_add_google(name = my_font, family = my_font)
+
+showtext_auto()
+
+library(ggtext) # Ref: https://cran.r-project.org/web/packages/ggtext/index.html
+
+```
+
+
+# Prepare title + subtitle + caption: 
+```{r}
+p_title <- "Everyone <span style='color:#00CFAA'> likes chocolates</span>, but Bounty and Snickers get <span style= 'color:#B3AEAE'>the most extreme opinions</span>"
+
+p_subtitle = "Likert scale is a type of rating scale commonly used in surveys. When responding to a Likert type question,\nrespondents simply state their level of agreement or disagreement on a symmetric agree-disagree scale."
+
+p_caption <- "Here captions"
+
+theme_set(theme_minimal())
+
+```
+
+
+```{r}
+gg1<- df_ordered %>% 
+  ggplot(aes(y = brand, x = percent, fill = cus_res)) + 
+  geom_col(width = 0.8, position = "fill") + 
+  theme(legend.position = "top") + 
+  theme(plot.margin = unit(rep(0.7, 4), "cm")) +  
+  labs(title = p_title, subtitle = p_subtitle, caption = p_caption) + 
+  scale_fill_manual(values = c(`Like them a lot` = col_like_alot, 
+                               `Like them` = col_like, 
+                               `Neutrals` = col_neutral, 
+                               `Dislike them` = col_dislike, 
+                               `Dislike a lot` = col_dislike_alot)) + 
+  theme(text = element_text(family = my_font)) + 
+  theme(legend.title = element_blank()) + 
+  theme(legend.text = element_text(size = 11, family = my_font, color = "grey10")) + 
+  theme(legend.key.height = unit(0.35, "cm")) +  
+  theme(legend.key.width = unit(0.27*3, "cm")) + 
+  theme(axis.title = element_blank()) + 
+  theme(panel.grid.minor = element_blank()) + 
+  theme(panel.grid.major.x = element_line(color = "grey70", linewidth  = 0.8)) + 
+  scale_x_continuous(expand = c(0, 0), labels = paste0(seq(0, 100, 25), "%")) + 
+  scale_y_discrete(expand = c(0, 0)) + 
+  theme(axis.text = element_text(color = "grey30", size = 11, family = my_font)) + 
+  theme(plot.title = element_markdown(size = 15, face = "bold")) + 
+  theme(plot.caption = element_text(size = 10.5, color = "grey40", vjust = -1.5, hjust = 0)) + 
+  theme(plot.subtitle = element_text(size = 11.5, color = "grey10")) + 
+  theme(plot.title.position = "plot") +  
+  theme(plot.caption.position = "plot") +
+  guides(fill = guide_legend(reverse = TRUE))
+```
+
+
+
+
+
+# For displaying percent of "Dislike a lot": 
+```{r, fig.width= 9, fig.height=6}
+df_ordered %>% 
+  filter(cus_res == "Dislike a lot") -> df_for_text1
+# For displaying percent of "Like them a lot": 
+
+df_ordered %>% 
+  filter(cus_res == "Like them a lot") -> df_for_text2
+
+# Ad text layers: 
+
+#gg1 + 
+ # geom_text(data = df_for_text1 %>% filter(percent > 2),
+  #          aes(y = brand, x = 1, label = bar_text), size = 4, color = "white", family = my_font, hjust = 1.2) +   
+#  geom_text(data = df_for_text2, 
+ #           aes(y = brand, x = 0.03, label = bar_text), size = 4, color = "white", family = my_font)+
+  gg1+geom_text(
+    data=df_ordered %>% filter(percent > 2),
+    aes(x = percent, y=brand, label=bar_text, group=cus_res),
+    position=position_fill(vjust=0.5),
+    color='white', size=3.2
+  )
+
+
+
+```
+
+
+
+## Divergente Bar Plots 
+
+Wir müssen dazu zuerst das Format der Daten ändern. 
+
+Data Set for Percent and ordering
+
+```{r}
+df_div <- df_ordered%>%
+    mutate(percent =  case_when(cus_res == "Dislike them"~ -percent,
+                            cus_res == "Dislike a lot" ~-percent,
+                            .default = percent)) %>% 
+  group_by(brand) %>%
+  mutate(cus_res = factor(cus_res, levels = c(
+    "Dislike a lot", 
+    "Dislike them",
+    "Neutrals",
+    "Like them a lot",
+    "Like them"
+  
+  )))
+
+df_lab <- df_div %>% 
+  filter(!cus_res=="Neutrals") %>% 
+  group_by(brand, ne = cus_res == "Dislike them"|cus_res == "Dislike a lot") %>% 
+  mutate(total =  paste0(sum(abs(percent)),"%")) %>%
+  ungroup() %>%
+  filter(cus_res == "Dislike a lot" | cus_res == "Like them a lot")
+
+df_total <- df_div %>% 
+  filter(!cus_res=="Neutrals") %>% 
+  group_by(brand, ne = cus_res == "Dislike them"|cus_res == "Dislike a lot") %>% 
+  mutate(total =  paste0(sum(abs(percent)),"%")) %>%
+  ungroup()
+new_y <- df_lab %>% 
+  filter(percent > 0) %>% 
+  arrange(total) %>% 
+  pull(brand)
+
+df_div <- df_div %>% 
+  mutate(brand = factor(brand, levels = new_y)) 
+
+df_div %>% 
+  filter(!cus_res == "Neutrals") %>% 
+  ggplot() + 
+    geom_col(aes(percent,brand, fill = cus_res),width = 0.8)  + 
+    theme(legend.position = "top",
+          legend.justification = "left",
+          legend.title = element_blank(),
+          plot.margin = unit(rep(1, 4), "cm"),
+          legend.text = element_text(size = 11, family = my_font, color = "grey10"),
+          text = element_text(family = my_font),
+          legend.key.height = unit(0.35, "cm"), #farbige box legend
+          legend.key.width = unit(0.27*3, "cm"),
+          axis.title = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.grid.major.x = element_blank(),
+          panel.grid.major.y = element_blank(),
+          axis.line.x = element_line()
+
+          ) +
+      scale_fill_manual(values = c(`Like them a lot` = col_like_alot, 
+                               `Like them` = col_like, 
+                               `Dislike them` = col_dislike, 
+                               `Dislike a lot` = col_dislike_alot),
+                        breaks = c("Dislike a lot", "Dislike them", "Like them", "Like them a lot")) +
+      labs(title = p_title, subtitle = p_subtitle, caption = p_caption) +
+  scale_y_discrete(expand = c(0, 0)) + 
+  theme(axis.text = element_text(color = "grey30", size = 11, family = my_font)) +
+  theme(axis.text.y = element_text(face = "bold"))+
+  theme(plot.title = element_markdown(size = 15, face = "bold")) + 
+  theme(plot.caption = element_text(size = 10.5, color = "grey40", vjust = -1.5, hjust = 0)) + 
+  theme(plot.subtitle = element_text(size = 11.5, color = "grey10")) + 
+  theme(plot.title.position = "plot") +  
+  theme(plot.caption.position = "plot") +
+  guides(fill = guide_legend(reverse = F))+
+  geom_vline(xintercept = 0) +
+  scale_x_continuous(expand=c(0,0), limits=c(-40,100), breaks = c(-40,0,50,100), labels = c("40%","0%","50%","100%"))   -> gg3
+
+```
+
+Add percent 
+```{r, fig.width=9, fig.height=6}
+
+
+gg3 + 
+  geom_text(data = df_lab, 
+            aes(x = percent, y = brand, label = ifelse(percent<0, paste0(total, ""), paste0("", total)), group = cus_res, fill = NULL, family = my_font),
+            color = "grey40", size = 3.5, nudge_x = df_total %>% filter(cus_res == "Dislike them"| cus_res == "Like them") %>% pull(percent), hjust = ifelse(df_lab$percent < 0, 1.3,-0.3)) -> gg3.5
+  
+
+
+```
+Add neutrals in a second plot 
+```{r}
+df_div %>% 
+  filter(cus_res == "Neutrals")%>%
+  ggplot() +
+  geom_col(aes(x = percent, y = brand, fill = cus_res),width = 0.8) + 
+  theme(
+    legend.position = "top",
+    plot.margin = unit(rep(0.7, 4), "cm"),
+    legend.text = element_text(size = 11, family = my_font, color = "grey10"),
+    text = element_text(family = my_font),
+    legend.key.height = unit(0.35, "cm"), #farbige box legend
+    legend.key.width = unit(0.27*3, "cm"),
+    legend.title = element_blank(),
+    legend.justification = "left",
+    axis.title = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_blank(),
+    axis.line.x = element_line(),
+    axis.text.y = element_blank()
+    ) +
+  scale_x_continuous(limits = c(0,50), breaks = c(0,20,50), labels = c("0%", "20%", "50%"),expand = c(0,0)) +
+  scale_fill_manual(values = col_neutral) +
+  geom_text(aes(x = percent, y = brand, label = bar_text,family = my_font), color = "grey40", size =   3.5,hjust = -0.3)+
+    scale_y_discrete(expand = c(0, 0)) + #sodass erste y kategorie direkt auf der linie beginnt
+    theme(axis.text = element_text(color = "grey30", size = 11, family = my_font)) + 
+   geom_vline(xintercept = 0) -> gg4
+
+```
+
+Combine
+
+```{r}
+library(patchwork)
+library(svglite)
+```
+
+```{r, fig.width=10, fig.height=6}
+
+gg3.5+gg4 +
+  plot_layout(widths = c(3, 1)) 
+
+ggsave(file ="divbar.svg", width = 10 ,height = 6)
+```
+
+
+```{r}
+gg2<- ggplot() + 
+  geom_segment(aes(x = seq(0, 1, 0.25), xend = seq(0, 1, 0.25), y = 0.6, yend = 8.4), linewidth = 0.7, color = "grey40") +  
+  geom_col(data = df_ordered, 
+           aes(y = brand, x = percent, fill = cus_res), 
+           width = 0.8, position = "fill", show.legend = FALSE) +   theme(plot.margin = unit(rep(0.7, 4), "cm")) +  
+  labs(title = p_title, subtitle = p_subtitle, caption = p_caption) + 
+  scale_fill_manual(values = c(`Like them a lot` = col_like_alot, 
+                               `Like them` = col_like, 
+                               `Neutrals` = col_neutral, 
+                               `Dislike them` = col_dislike, 
+                               `Dislike a lot` = col_dislike_alot)) + 
+  theme(text = element_text(family = my_font)) + 
+  theme(axis.title = element_blank()) + 
+  theme(panel.grid = element_blank()) +
+  scale_x_continuous(expand = c(0, 0), labels = paste0(seq(0, 100, 25), "%")) + 
+  scale_y_discrete(expand = c(0, 0)) + 
+  theme(axis.text = element_text(color = "grey30", size = 11, family = my_font)) + 
+  theme(plot.title = element_markdown(size = 16, face = "bold")) + 
+  theme(plot.caption = element_text(size = 10.5, color = "grey40", vjust = -1.5, hjust = 0)) + 
+  theme(plot.subtitle = element_text(size = 11.5, color = "grey10")) + 
+  theme(plot.title.position = "plot") +  
+  theme(plot.caption.position = "plot") 
+```
+
+
+
+
+# http://daydreamingnumbers.com/blog/4-ways-to-visualize-likert-scales/: 
+```{r, fig.width=9, fig.height=6}
+gg2 + 
+  annotate("text", 
+           x = c(0.071, 0.42, 0.67, 0.803, 0.94),
+           y = 9, 
+           label = responses, 
+           vjust = 1.2, 
+           color = c(col_like_alot, col_like, col_neutral, col_dislike, col_dislike_alot), 
+           size = 4, 
+           fontface = "bold", 
+           family = my_font) + 
+  geom_text(data = df_for_text1 %>% filter(percent > 2),
+            aes(y = brand, x = 1, label = bar_text), size = 4, color = "white", family = my_font, hjust = 1.2) +   
+  geom_text(data = df_for_text2, 
+            aes(y = brand, x = 0.03, label = bar_text), size = 4, color = "white", family = my_font)
+
+```
+Add percentage to all parts
+```{r, fig.width=9, fig.height=6}
+gg1 +
+  geom_text(
+    data=df_ordered %>% filter(percent > 2),
+    aes(x = percent, y=brand, label=bar_text, group=cus_res),
+    position=position_fill(vjust=0.5),
+    color='white', size=3.2
+  )
+```
+
