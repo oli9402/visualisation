@@ -91,5 +91,8 @@ ggplot(df_vis,aes(mean, y, color = gruppe, group = gruppe)) +
     legend.title = element_blank(),
     axis.text.y = element_text(face = "bold", size = 1)
     )
+
+ggsave(here::here("semantic_diff","output_images", "sem_d.svg"))
+
 ```
 
