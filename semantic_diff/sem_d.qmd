@@ -1,0 +1,95 @@
+---
+title: "Likert_Vis"
+format:
+  html:
+    code-fold: true
+    code-summary: "Show the code"
+    df-print: kable
+editor: source
+---
+
+
+### Packete installieren und laden
+
+```{r setup, include=FALSE}
+# RStudio Environment löschen. Somit ist nichts unerwünschtes in unserer Arbeitsfläche
+rm(list = ls())
+knitr::opts_chunk$set( message = FALSE, warning = FALSE,
+                      dev = "svg", fig.width = 10, fig.height = 7)
+
+
+library(tidyverse)
+
+```
+
+### Daten 
+
+Zuerst sollte man sich überlegen wie die Datenstruktur aussehen sollte, die man für das Ploten braucht. Nehmen wir an, dass wir 3 verschiedene Gruppen haben, die jeweils das Semantische Differenzial ausfüllen. 
+Am einfachsten ist es für einen breiten Datensatz zu erstellen, wobei jede Personen eine Zeile bekommt. Wir erstellen auch eine Spalte mit der Gruppenzugehörigkeit.
+
+```{r}
+# wie viele Personen?
+n <- 100
+
+# mögliche Antworten?
+response <- c(-2,-1,0,1,2)
+# Gruppen
+group <- c("G1", "G2", "K")
+
+# 5 Spalten: id, gruppe, gut, gesund, neu mit jeweils n Zeilen
+df <- data.frame(
+  id = seq(1,n, by = 1),
+  gruppe = sample(group, n, replace = T, prob = c(0.3,0.3,0.4)),
+  schlecht_gut = sample(response, n, replace = T, prob = c(10,20,40,20,10)),
+  ungesund_gesund = sample(response,n, replace = T,prob = c(30,30,30,5,5)),
+  alt_neu = sample(response, n,replace = T,prob = c(0.10,0.10,0.50,0.20,0.1))
+)
+```
+
+### Daten manipulation für plotten
+
+Als nächstes wollen wir den Datensatz so ändern, dass er geplottet werden kann. 
+
+Dafür wird mitteln wir die Werte in den Spalten für die einzelnen Adjektive und fügen diesen Mittelwert in eine neue spalte "Data", und erstellen eine weitere Spalte, die beinhaltet welche Adjektive in der Data Zeile verweist wird.
+
+```{r}
+
+df_vis <- df %>% 
+  gather(c(schlecht_gut, ungesund_gesund, alt_neu), key = "Adj", value = "data") %>% 
+  group_by(gruppe,Adj) %>% 
+  summarise(mean = mean(data),
+            sd = sd(data),
+            lower = mean - sd,
+            upper = mean + sd) %>% 
+  tibble(y = c(rep(c(1,2,3),3)))
+
+
+```
+
+## Plots 
+
+```{r}
+# Labels für links und rechts
+lab_l <- c("ungesund", "schlecht", "alt")
+lab_r <- c("gesund", "gut", "neu")
+
+
+ggplot(df_vis,aes(mean, y, color = gruppe, group = gruppe)) + 
+  geom_point(position=position_dodge(width=0.2))+
+  geom_errorbar(aes(xmin=lower,xmax=upper,color=gruppe), width = 0.3,
+        linetype = "dotted",
+        position=position_dodge(width=0.2)) + 
+  geom_path(position=position_dodge(width=0.2)) + 
+  theme_minimal() +
+  coord_cartesian(xlim = c(-2,2)) + # bringt x achse in die Mitte 
+  geom_vline(aes(xintercept = 0), linetype = "dashed") + 
+  scale_y_continuous(breaks = 1:length(lab_l), name = NULL, labels = lab_l,
+    ,sec.axis = sec_axis(trans = ~., breaks = 1:length(lab_r), labels = lab_r))+
+  theme(
+    panel.grid.minor = element_blank(),
+    legend.position = "top",
+    legend.title = element_blank(),
+    axis.text.y = element_text(face = "bold", size = 1)
+    )
+```
+

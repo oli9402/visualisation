@@ -4,6 +4,7 @@ format:
   html:
     code-fold: true
     code-summary: "Show the code"
+    df-print: kable
 editor: source
 
 ---
@@ -19,16 +20,18 @@ Im folgenden simulieren wir einen Datensatz, den wir danach visualisieren könne
 Zuerst noch einige Vorbereitungsschritte
 
 ### Packete installieren und laden
-```{r, warning = F, error=F, message=FALSE}
+
+```{r setup, include=FALSE}
 # RStudio Environment löschen. Somit ist nichts unerwünschtes in unserer Arbeitsfläche
 rm(list = ls())
+knitr::opts_chunk$set( message = FALSE, warning = FALSE,
+                      dev = "svg", fig.width = 10, fig.height = 7)
 
-# Packete installieren
-# install.packages("tidyverse")
 
-# Packete laden
 library(tidyverse)
+
 ```
+
 ### Daten simulieren
 
 Wir erstellen eine Simulation mit einer Likert Skala mit 5 Stufen. Es wird über Schokoriegel gehen. 
@@ -249,7 +252,9 @@ df_ordered %>%
     color='white', size=3.2
   )
 
-
+### save
+  
+ggsave(here::here("likert_plots","output_images", "likert_quote.svg"), width = 10, height = 7)
 
 ```
 
@@ -390,7 +395,8 @@ library(svglite)
 gg3.5+gg4 +
   plot_layout(widths = c(3, 1)) 
 
-ggsave(file ="divbar.svg", width = 10 ,height = 6)
+### save
+ggsave(here::here("likert_plots","output_images", "likert_div.svg"), width = 10, height = 7)
 ```
 
 
@@ -449,5 +455,8 @@ gg1 +
     position=position_fill(vjust=0.5),
     color='white', size=3.2
   )
+
+### save
+ggsave(here::here("likert_plots","output_images", "likert_quote_percent.svg"), width = 10, height = 7)
 ```
 
