@@ -61,38 +61,36 @@ df_vis <- df %>%
             sd = sd(data),
             lower = mean - sd,
             upper = mean + sd) %>% 
-  tibble(y = c(rep(c(1,2,3),3)))
+  tibble(y = c(rep(c(1,2,3),3))) #wir brauchen numerische y axis um sie auf beiden seiten zu haben.
 
 
 ```
 
 ## Plots 
 
-```{r}
+```{r, fig.height=7, fig.height=4}
 # Labels für links und rechts
 lab_l <- c("ungesund", "schlecht", "alt")
 lab_r <- c("gesund", "gut", "neu")
 
 
 ggplot(df_vis,aes(mean, y, color = gruppe, group = gruppe)) + 
-  geom_point(position=position_dodge(width=0.2))+
-  geom_errorbar(aes(xmin=lower,xmax=upper,color=gruppe), width = 0.3,
-        linetype = "dotted",
-        position=position_dodge(width=0.2)) + 
-  geom_path(position=position_dodge(width=0.2)) + 
+  #geom_errorbar(aes(xmin=lower,xmax=upper,color=gruppe), width = 0.3,
+  #      linetype = "dotted",
+  #      position = position_dodge(width = 0.5))+
+  geom_point() +
+  geom_path() + 
   theme_minimal() +
   coord_cartesian(xlim = c(-2,2)) + # bringt x achse in die Mitte 
   geom_vline(aes(xintercept = 0), linetype = "dashed") + 
-  scale_y_continuous(breaks = 1:length(lab_l), name = NULL, labels = lab_l,
-    ,sec.axis = sec_axis(trans = ~., breaks = 1:length(lab_r), labels = lab_r))+
+  scale_y_continuous(breaks = 1:length(lab_l), name = NULL, labels = lab_l ,sec.axis = sec_axis(trans = ~., breaks = 1:length(lab_r), labels = lab_r))+
   theme(
     panel.grid.minor = element_blank(),
     legend.position = "top",
     legend.title = element_blank(),
-    axis.text.y = element_text(face = "bold", size = 1)
-    )
+    axis.text.y = element_text(face = "bold"))
 
-ggsave(here::here("semantic_diff","output_images", "sem_d.svg"))
+#ggsave(here::here("semantic_diff","output_images", "sem_d.svg"))
 
 ```
 
