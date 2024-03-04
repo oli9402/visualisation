@@ -68,18 +68,19 @@ df_vis <- df %>%
 
 ## Plots 
 
-```{r, fig.height=7, fig.height=4}
+```{r}
+library(ggstance)
 # Labels für links und rechts
 lab_l <- c("ungesund", "schlecht", "alt")
 lab_r <- c("gesund", "gut", "neu")
-
+pd <- position_dodge(width = 0.3)
 
 ggplot(df_vis,aes(mean, y, color = gruppe, group = gruppe)) + 
-  #geom_errorbar(aes(xmin=lower,xmax=upper,color=gruppe), width = 0.3,
-  #      linetype = "dotted",
-  #      position = position_dodge(width = 0.5))+
-  geom_point() +
-  geom_path() + 
+  geom_errorbar(aes(xmin=lower,xmax=upper,color=gruppe), width = 0.3,
+        linetype = "dotted",
+        position = pd)+
+  geom_point(position=ggstance::position_dodgev(height = 0.3)) +
+  geom_line(orientation =  "y", position = pd) + 
   theme_minimal() +
   coord_cartesian(xlim = c(-2,2)) + # bringt x achse in die Mitte 
   geom_vline(aes(xintercept = 0), linetype = "dashed") + 
