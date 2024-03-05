@@ -13,9 +13,9 @@ editor: source
 
 ```{r setup, include=FALSE}
 # RStudio Environment löschen. Somit ist nichts unerwünschtes in unserer Arbeitsfläche
-rm(list = ls())
+#rm(list = ls())
 knitr::opts_chunk$set( message = FALSE, warning = FALSE,
-                      dev = "svg", fig.width = 10, fig.height = 7)
+                      dev = "svg", fig.width = 5, fig.height = 5)
 
 
 library(tidyverse)
@@ -75,12 +75,12 @@ lab_l <- c("ungesund", "schlecht", "alt")
 lab_r <- c("gesund", "gut", "neu")
 pd <- position_dodge(width = 0.3)
 
-ggplot(df_vis,aes(mean, y, color = gruppe, group = gruppe)) + 
+p1 <- ggplot(df_vis,aes(mean, y, color = gruppe, group = gruppe)) + 
   geom_errorbar(aes(xmin=lower,xmax=upper,color=gruppe), width = 0.3,
         linetype = "dotted",
         position = pd)+
-  geom_point(position=ggstance::position_dodgev(height = 0.3)) +
-  geom_line(orientation =  "y", position = pd) + 
+  geom_point(position=ggstance::position_dodgev(height = 0.3), size = 2.5) +
+  geom_line(orientation =  "y", position = pd, size = 2) + 
   theme_minimal() +
   coord_cartesian(xlim = c(-2,2)) + # bringt x achse in die Mitte 
   geom_vline(aes(xintercept = 0), linetype = "dashed") + 
@@ -91,7 +91,57 @@ ggplot(df_vis,aes(mean, y, color = gruppe, group = gruppe)) +
     legend.title = element_blank(),
     axis.text.y = element_text(face = "bold"))
 
-#ggsave(here::here("semantic_diff","output_images", "sem_d.svg"))
 
+
+```
+
+## Styling the Plots
+
+```{r}
+my_font <- "Roboto Condensed"
+
+library(showtext)
+
+font_add_google(name = my_font, family = my_font)
+
+showtext_auto()
+
+library(ggtext) # Ref: https://cran.r-project.org/web/packages/ggtext/index.html
+```
+
+```{r}
+p_title <- "Everyone <span style='color:#00CFAA'> likes chocolates</span>, but Bounty and Snickers get <span style= 'color:#B3AEAE'>the most extreme opinions</span>"
+
+p_subtitle = "Likert scale is a type of rating scale commonly used in surveys. When responding to a Likert type question,\nrespondents simply state their level of agreement or disagreement on a symmetric agree-disagree scale."
+
+p_caption <- "Here captions"
+g1_color <- "#e36c33"
+g2_color <- "#edad88"
+k_color <- "#c7cdd1" 
+
+
+```
+
+```{r}
+p1+ 
+  labs(title = p_title, subtitle = p_subtitle, caption = p_caption) + 
+  scale_color_manual(values = c("G1" = g1_color,
+                               "G2" = g2_color, 
+                               "K" = k_color)) + 
+  theme(text = element_text(family = my_font)) + 
+  theme(legend.title = element_blank()) + 
+  theme(legend.text = element_text(size = 11, family = my_font, color = "grey10")) + 
+  theme(legend.key.width = unit(2, "cm")) + 
+  theme(axis.title = element_blank()) + 
+  theme(panel.grid.minor = element_blank()) + 
+  theme(panel.grid.major.x = element_line(color = "grey70", linewidth  = 0.8)) +
+  theme(axis.text = element_text(color = "grey30", size = 11, family = my_font)) + 
+  theme(plot.title = element_markdown(size = 15, face = "bold")) + 
+  theme(plot.caption = element_text(size = 10.5, color = "grey40", vjust = -1.5, hjust = 0)) + 
+  theme(plot.subtitle = element_text(size = 11.5, color = "grey10")) + 
+  theme(plot.title.position = "plot") +  
+  theme(plot.caption.position = "plot")
+
+#ggsave(here::here("semantic_diff","output_images", "sem_d.svg"))
 ```
 
