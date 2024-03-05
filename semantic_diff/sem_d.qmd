@@ -15,7 +15,7 @@ editor: source
 # RStudio Environment löschen. Somit ist nichts unerwünschtes in unserer Arbeitsfläche
 #rm(list = ls())
 knitr::opts_chunk$set( message = FALSE, warning = FALSE,
-                      dev = "svg", fig.width = 5, fig.height = 5)
+                      dev = "svg", fig.width = 4, fig.height = 7)
 
 
 library(tidyverse)
@@ -73,17 +73,17 @@ library(ggstance)
 # Labels für links und rechts
 lab_l <- c("ungesund", "schlecht", "alt")
 lab_r <- c("gesund", "gut", "neu")
-pd <- position_dodge(width = 0.3)
+pd <- position_dodge(width = 0.1)
 
 p1 <- ggplot(df_vis,aes(mean, y, color = gruppe, group = gruppe)) + 
-  geom_errorbar(aes(xmin=lower,xmax=upper,color=gruppe), width = 0.3,
-        linetype = "dotted",
+  geom_vline(aes(xintercept = 0), linetype = "solid", size = 1) + 
+  geom_errorbar(aes(xmin=lower,xmax=upper,color=gruppe), width = 0.2,
+        # linetype = "dotted",
         position = pd)+
-  geom_point(position=ggstance::position_dodgev(height = 0.3), size = 2.5) +
   geom_line(orientation =  "y", position = pd, size = 2) + 
+  geom_point(position=ggstance::position_dodgev(height = 0.1), size = 2.5, fill = "white",shape=21) +
   theme_minimal() +
   coord_cartesian(xlim = c(-2,2)) + # bringt x achse in die Mitte 
-  geom_vline(aes(xintercept = 0), linetype = "dashed") + 
   scale_y_continuous(breaks = 1:length(lab_l), name = NULL, labels = lab_l ,sec.axis = sec_axis(trans = ~., breaks = 1:length(lab_r), labels = lab_r))+
   theme(
     panel.grid.minor = element_blank(),
@@ -110,13 +110,13 @@ library(ggtext) # Ref: https://cran.r-project.org/web/packages/ggtext/index.html
 ```
 
 ```{r}
-p_title <- "Everyone <span style='color:#00CFAA'> likes chocolates</span>, but Bounty and Snickers get <span style= 'color:#B3AEAE'>the most extreme opinions</span>"
+p_title <- "Sem Differenzial zeigt, dass <span style='color:#002383'>Design 1</span> gut<br>ankommt und <span style= 'color:#A029F9'>Design 2</span> nicht"
 
-p_subtitle = "Likert scale is a type of rating scale commonly used in surveys. When responding to a Likert type question,\nrespondents simply state their level of agreement or disagreement on a symmetric agree-disagree scale."
+p_subtitle = "Likert scale is a type of rating scale commonly used in surveys. When responding to a Likert type."
 
 p_caption <- "Here captions"
-g1_color <- "#e36c33"
-g2_color <- "#edad88"
+g1_color <- "#A029F9"
+g2_color <- "#002383"
 k_color <- "#c7cdd1" 
 
 
@@ -134,8 +134,9 @@ p1+
   theme(legend.key.width = unit(2, "cm")) + 
   theme(axis.title = element_blank()) + 
   theme(panel.grid.minor = element_blank()) + 
-  theme(panel.grid.major.x = element_line(color = "grey70", linewidth  = 0.8)) +
-  theme(axis.text = element_text(color = "grey30", size = 11, family = my_font)) + 
+  theme(panel.grid.major.x = element_line(color = "grey70", linewidth  = 0.5, linetype = "dashed")) +
+  theme(panel.grid.major.y = element_blank()) +
+  theme(axis.text = element_text(color = "black", size = 11, family = my_font)) + 
   theme(plot.title = element_markdown(size = 15, face = "bold")) + 
   theme(plot.caption = element_text(size = 10.5, color = "grey40", vjust = -1.5, hjust = 0)) + 
   theme(plot.subtitle = element_text(size = 11.5, color = "grey10")) + 
