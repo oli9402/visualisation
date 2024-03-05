@@ -29,7 +29,7 @@ Am einfachsten ist es für einen breiten Datensatz zu erstellen, wobei jede Pers
 
 ```{r}
 # wie viele Personen?
-n <- 100
+n <- 1000
 
 # mögliche Antworten?
 response <- c(-2,-1,0,1,2)
@@ -52,16 +52,24 @@ Als nächstes wollen wir den Datensatz so ändern, dass er geplottet werden kann
 
 Dafür wird mitteln wir die Werte in den Spalten für die einzelnen Adjektive und fügen diesen Mittelwert in eine neue spalte "Data", und erstellen eine weitere Spalte, die beinhaltet welche Adjektive in der Data Zeile verweist wird.
 
+!!!!!Achtung wenn man versucht Stichprobengrösse zu finden muss man aufpassen auf welchen Datensatz man die funktion n() anwednet. Nach Gather wird der Datensatz länger!!
+
+Wenn man richtig gruppiert: also nach Gruppe und Adjektive, dann kommt die richtige Stichprobengrösse raus. 
+
 ```{r}
 
 df_vis <- df %>% 
   gather(c(schlecht_gut, ungesund_gesund, alt_neu), key = "Adj", value = "data") %>% 
   group_by(gruppe,Adj) %>% 
   summarise(mean = mean(data),
-            sd = sd(data),
-            lower = mean - sd,
-            upper = mean + sd) %>% 
-  tibble(y = c(rep(c(1,2,3),3))) #wir brauchen numerische y axis um sie auf beiden seiten zu haben.
+            n = n(), # pro unique Kombination(gruppe, ADJ) erstes n speichern  
+            se = sd(data)/sqrt(n),
+            ma_er = qt(0.025, df = n-1, lower.tail = F) * se,
+            lower = mean - ma_er,
+            upper = mean + ma_er,
+            .groups = "drop") %>% 
+  tibble(y = c(rep(c(1,2,3),3)))
+#wir brauchen numerische y axis um sie auf beiden seiten zu haben.
 
 
 ```
@@ -71,19 +79,19 @@ df_vis <- df %>%
 ```{r}
 library(ggstance)
 # Labels für links und rechts
-lab_l <- c("ungesund", "schlecht", "alt")
-lab_r <- c("gesund", "gut", "neu")
+lab_l <- c("alt", "schlecht", "ungesund")
+lab_r <- c("neu", "gut", "gesund")
 pd <- position_dodge(width = 0.1)
 
 p1 <- ggplot(df_vis,aes(mean, y, color = gruppe, group = gruppe)) + 
-  geom_vline(aes(xintercept = 0), linetype = "solid", size = 1) + 
+  geom_vline(aes(xintercept = 0), linetype = "solid", size = 0.6) + 
   geom_errorbar(aes(xmin=lower,xmax=upper,color=gruppe), width = 0.2,
         # linetype = "dotted",
         position = pd)+
-  geom_line(orientation =  "y", position = pd, size = 2) + 
+  geom_line(orientation =  "y", position = pd, size = 1.2) + 
   geom_point(position=ggstance::position_dodgev(height = 0.1), size = 2.5, fill = "white",shape=21) +
   theme_minimal() +
-  coord_cartesian(xlim = c(-2,2)) + # bringt x achse in die Mitte 
+  coord_cartesian(xlim = c(-1,1)) + # bringt x achse in die Mitte 
   scale_y_continuous(breaks = 1:length(lab_l), name = NULL, labels = lab_l ,sec.axis = sec_axis(trans = ~., breaks = 1:length(lab_r), labels = lab_r))+
   theme(
     panel.grid.minor = element_blank(),
@@ -110,9 +118,9 @@ library(ggtext) # Ref: https://cran.r-project.org/web/packages/ggtext/index.html
 ```
 
 ```{r}
-p_title <- "Sem Differenzial zeigt, dass <span style='color:#002383'>Design 1</span> gut<br>ankommt und <span style= 'color:#A029F9'>Design 2</span> nicht"
+p_title <- "Sem Differenzial zeigt, dass <span style='color:#002383'>Design 1</span> gut ankommt und <span style= 'color:#A029F9'>Design 2</span> nicht.<br><span style='color:#c7cdd1'>Kontrolldesign</span> ist in grau."
 
-p_subtitle = "Likert scale is a type of rating scale commonly used in surveys. When responding to a Likert type."
+p_subtitle = "95% Konfidenzintervalle überschneiden sich, also sind die Unterschiede nicht signifikant"
 
 p_caption <- "Here captions"
 g1_color <- "#A029F9"
