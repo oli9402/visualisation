@@ -90,6 +90,20 @@ p1 <- ggplot(df_vis,aes(mean, y, color = gruppe, group = gruppe)) +
         position = pd)+
   geom_line(orientation =  "y", position = pd, size = 1.2) + 
   geom_point(position=ggstance::position_dodgev(height = 0.1), size = 2.5, fill = "white",shape=21) +
+  geom_label(aes(x = 0.25, y = 3.2, label = "95% Konfidenzintervall"), 
+                  hjust = 0, 
+                  vjust = 0.5, 
+                  lineheight = 0,
+                  label.size = NA, 
+                  size = 2,
+                  fill = NA,
+                  show.legend = FALSE,
+             color = "grey40")   +
+  geom_curve(aes(x = 0.2, y = 3.2, xend = -0.6, yend = 3.1), 
+             colour = "grey40", 
+             size=0.4, 
+             curvature = 0.2,
+             arrow = arrow(length = unit(0.03, "npc"))) +
   theme_minimal() +
   coord_cartesian(xlim = c(-1,1)) + # bringt x achse in die Mitte 
   scale_y_continuous(breaks = 1:length(lab_l), name = NULL, labels = lab_l ,sec.axis = sec_axis(trans = ~., breaks = 1:length(lab_r), labels = lab_r))+
@@ -152,5 +166,14 @@ p1+
   theme(plot.caption.position = "plot")
 
 #ggsave(here::here("semantic_diff","output_images", "sem_d.svg"))
+```
+
+
+## Add text to show confidence intervall
+
+```{r}
+
+
+
 ```
 
