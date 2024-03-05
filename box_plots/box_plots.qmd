@@ -127,7 +127,7 @@ p <- ggplot(cars, aes(fast,dist)) +
         plot.subtitle = element_text(margin=margin(0,0,30,0))) 
 
 p
-# ggsave(here::here("posts","Theme", "box.svg"), width = 10, height = 7)
+# ggsave(here::here("box_plots","output_image", "box.svg"), width = 10, height = 7)
 
 ```
 
