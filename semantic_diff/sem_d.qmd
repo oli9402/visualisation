@@ -82,6 +82,7 @@ library(ggstance)
 lab_l <- c("alt", "schlecht", "ungesund")
 lab_r <- c("neu", "gut", "gesund")
 pd <- position_dodge(width = 0.1)
+text_konf <- "95% Konfidenzintervalle \n überschneiden sich"
 
 p1 <- ggplot(df_vis,aes(mean, y, color = gruppe, group = gruppe)) + 
   geom_vline(aes(xintercept = 0), linetype = "solid", size = 0.6) + 
@@ -90,19 +91,17 @@ p1 <- ggplot(df_vis,aes(mean, y, color = gruppe, group = gruppe)) +
         position = pd)+
   geom_line(orientation =  "y", position = pd, size = 1.2) + 
   geom_point(position=ggstance::position_dodgev(height = 0.1), size = 2.5, fill = "white",shape=21) +
-  geom_label(aes(x = 0.25, y = 3.2, label = "95% Konfidenzintervall"), 
+  geom_label(aes(x = -0.48, y = 3.2, label = text_konf), 
                   hjust = 0, 
-                  vjust = 0.5, 
-                  lineheight = 0,
-                  label.size = NA, 
+                  vjust = 0.8, 
                   size = 2,
                   fill = NA,
                   show.legend = FALSE,
              color = "grey40")   +
-  geom_curve(aes(x = 0.2, y = 3.2, xend = -0.6, yend = 3.1), 
+  geom_curve(aes(x = -0.5, y = 3.2, xend = -0.7, yend = 3.1), 
              colour = "grey40", 
              size=0.4, 
-             curvature = 0.2,
+             curvature = 0.1,
              arrow = arrow(length = unit(0.03, "npc"))) +
   theme_minimal() +
   coord_cartesian(xlim = c(-1,1)) + # bringt x achse in die Mitte 
